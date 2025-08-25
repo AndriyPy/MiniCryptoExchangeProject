@@ -1,24 +1,34 @@
 import bcrypt
-from fastapi import HTTPException,APIRouter, Depends, Request, Response
+from fastapi import HTTPException,APIRouter, Depends, Response
 from pydantic import BaseModel, EmailStr, SecretStr, Field
 from backand.database.database import Session
 from backand.database.models import User as UserDbModel
 from backand.auth.token_jwt import create_jwt_token, get_current_user, TokenData
+from backand.crypto.bybit import run_ws
 
 
 router = APIRouter()
 
 class User(BaseModel):
     name: str = Field()
-    email: EmailStr = Field(description="User email", examples=["john@email.com"])
+    email: EmailStr = Field(description="User email", examples=["john@gmail.com"])
     password: SecretStr = Field(
         description="User's password. Minimum 6 characters.",
         min_length=6
     )
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: EmailStr = Field(description="User email", examples=["john@gmail.com"])
     password: SecretStr
+
+
+
+
+@router.get("/index")
+async def index(get_crypto:run_ws):
+    ...
+
+
 
 @router.post("/register")
 async def register_user(user:User, response: Response):
