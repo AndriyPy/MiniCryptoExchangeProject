@@ -1,19 +1,15 @@
 import bcrypt
-from fastapi import HTTPException,APIRouter, Depends, Response
+from fastapi import HTTPException,APIRouter, Depends, Response, Query
 from backand.database.database import Session
-from backand.database.models import User as UserDbModel
+from backand.database.models import User as UserDbModel, Crypto
 from backand.auth.token_jwt import create_jwt_token, get_current_user, TokenData
-from backand.crypto.bybit import run_ws
 from backand.py_models import User, UserLogin, Update_User
+from fastapi.responses import RedirectResponse
 
 
 router = APIRouter()
 
-
-
-@router.get("/index")
-async def index():
-    ...
+BYBIT_URL = "https://api.bybit.com/v5/market/kline"
 
 
 @router.post("/register", tags=["auth"])
@@ -178,4 +174,30 @@ async def update_profile(response: Response, user:Update_User, current_user: Tok
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.get("/candles", tags=["Crypto"])
+async def get_crypto(symbol: str):
+    try:
+        with Session() as session:
+            candles = (
+                session.query(Crypto)
+                .filter_by(symbol=symbol)
+                .order_by(Crypto.timestamp.asc())
+                .all()
+            )
+
+            return [
+                {
+                    "timestamp": c.timestamp,
+                    "open": c.open,
+                    "high": c.high,
+                    "low": c.low,
+                    "close": c.close,
+                    "volume": c.volume
+                }
+                for c in candles
+            ]
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 

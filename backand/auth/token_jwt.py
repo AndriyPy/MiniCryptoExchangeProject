@@ -6,6 +6,8 @@ import secrets
 import jwt
 from fastapi import Depends, HTTPException, Request, status
 from pydantic import BaseModel
+from fastapi.responses import RedirectResponse
+
 
 load_dotenv()
 
@@ -49,13 +51,15 @@ def decode_jwt(encoded_token: str):
 def get_current_user(request: Request) -> TokenData:
     token = request.cookies.get("access_token")
     if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
     payload = decode_jwt(token)
+
     email = payload.get("sub")
     user_id = payload.get("user_id")
 
     if email is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+        raise HTTPException(status_code=401, detail="Invalid token")
 
     return TokenData(email=email, user_id=user_id)
+

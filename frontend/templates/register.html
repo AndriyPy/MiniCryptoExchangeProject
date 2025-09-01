@@ -1,95 +1,158 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <title>Register</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    form {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 300px;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1e40af;
-    }
-    .response {
-      margin-top: 15px;
-      font-size: 14px;
-      color: green;
-    }
-    .error {
-      color: red;
-    }
-  </style>
-</head>
-<body>
-  <form id="registerForm">
-    <h2 style="text-align:center;">Register</h2>
-    <input type="text" id="name" placeholder="Name" required />
-    <input type="email" id="email" placeholder="Email" required />
-    <input type="password" id="password" placeholder="Password" required minlength="6"/>
-    <button type="submit">Register</button>
-    <div id="response" class="response"></div>
-  </form>
-
-  <script>
-    const form = document.getElementById("registerForm");
-    const responseDiv = document.getElementById("response");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      responseDiv.textContent = "Loading...";
-
-      const name = document.getElementById("name").value;
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      try {
-        const res = await fetch("http://127.0.0.1:1489/register", {
-
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password })
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.detail || "Registration failed");
+    <meta charset="UTF-8">
+    <title>Реєстрація користувача</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7f8;
+            margin: 0;
         }
 
-        responseDiv.textContent = `✅ Success: ${JSON.stringify(data)}`;
-        responseDiv.classList.remove("error");
-      } catch (err) {
-        responseDiv.textContent = `❌ Error: ${err.message}`;
-        responseDiv.classList.add("error");
-      }
-    });
-  </script>
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+            margin: 50px auto;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #d9534f; /* червоний для помилок */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>My Crypto Site</h1>
+        <nav>
+            <a href="/register.html">Register</a>
+            <a href="/login.html">Login</a>
+            <a href="/crypto.html">Candles Chart</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h2>Реєстрація</h2>
+        <label>Ім'я: </label>
+        <input type="text" id="name" placeholder="Ваше ім'я">
+
+        <label>Email: </label>
+        <input type="email" id="email" placeholder="example@email.com">
+
+        <label>Пароль: </label>
+        <input type="password" id="password" placeholder="Пароль">
+
+        <button onclick="registerUser()">Зареєструватися</button>
+
+        <p id="message"></p>
+    </div>
+
+    <script>
+        async function registerUser() {
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const msg = document.getElementById('message');
+
+            if (!name || !email || !password) {
+                msg.textContent = "Заповніть всі поля!";
+                return;
+            }
+
+            try {
+                const res = await fetch("http://127.0.0.1:1489/register", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    msg.style.color = "#d9534f";
+                    msg.textContent = data.detail || "Помилка при реєстрації";
+                    return;
+                }
+
+                msg.style.color = "green";
+                msg.textContent = data.message || "Користувач створений!";
+            } catch (err) {
+                console.error(err);
+                msg.style.color = "#d9534f";
+                msg.textContent = "Помилка при відправці запиту";
+            }
+        }
+    </script>
 </body>
 </html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Графік крипти</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background: #e2f0f7;
+        margin: 0;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    h2 {
+        color: #1b3a57;
+        margin-bottom: 25px;
+    }
+
+    .input-container {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    input[type="text"] {
+        padding: 12px;
+        border-radius: 8px;
+        border: 2px solid #007bff;
+        font-size: 16px;
+        width: 220px;
+    }
+
+    button {
+        padding: 12px 25px;
+        border-radius: 8px;
+        border: none;
+        background-color: #007bff;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+    #chart {
+        width: 100%;
+        max-width: 950px;
+        height: 600px;
+        background: #fff;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    }
+</style>
+
+</head>
+<body>
+    <h2>Графік свічок</h2>
+
+    <div class="input-container">
+        <input type="text" id="symbol" value="TONUSDT" placeholder="Введіть символ">
+        <button onclick="fetchCandles()">Показати графік</button>
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+        async function fetchCandles() {
+            const symbol = document.getElementById('symbol').value.trim();
+            if (!symbol) return alert("Введіть символ!");
+
+            try {
+                const res = await fetch(`http://127.0.0.1:1489/candles?symbol=${symbol}`);
+
+                if (res.status === 401) {
+                    alert("Ви не авторизовані! Увійдіть в систему.");
+                    return;
+                }
+
+                const data = await res.json();
+
+                if (!data.length) {
+                    alert("Свічок немає в БД для цього символу");
+                    return;
+                }
+
+                const trace = {
+                    x: data.map(c => new Date(c.timestamp * 1000)),
+                    open: data.map(c => c.open),
+                    high: data.map(c => c.high),
+                    low: data.map(c => c.low),
+                    close: data.map(c => c.close),
+                    type: 'candlestick',
+                    increasing: {line: {color: 'green'}},
+                    decreasing: {line: {color: 'red'}}
+                };
+
+                Plotly.newPlot('chart', [trace], {
+                    title: symbol,
+                    xaxis: {title: 'Час'},
+                    yaxis: {title: 'Ціна'}
+                });
+
+            } catch (err) {
+                console.error("Помилка при завантаженні:", err);
+                alert("Помилка при отриманні даних");
+            }
+        }
+    </script>
+<header>
+        <h1>My Crypto Site</h1>
+        <nav>
+            <a href="/register.html">Register</a>
+            <a href="/login.html">Login</a>
+            <a href="/crypto.html">Candles Chart</a>
+        </nav>
+    </header>
+</body>
+</html>
