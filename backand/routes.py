@@ -1,15 +1,22 @@
 import bcrypt
-from fastapi import HTTPException,APIRouter, Depends, Response, Query
+from fastapi import HTTPException,APIRouter, Depends, Response, Query, WebSocket, WebSocketDisconnect, WebSocketException
 from backand.database.database import Session
 from backand.database.models import User as UserDbModel, Crypto
 from backand.auth.token_jwt import create_jwt_token, get_current_user, TokenData
 from backand.py_models import User, UserLogin, Update_User
 from fastapi.responses import RedirectResponse
+import websockets
+import json
+import ssl, certifi
+
 
 
 router = APIRouter()
 
 BYBIT_URL = "https://api.bybit.com/v5/market/kline"
+BYBIT_WS = "wss://stream.bybit.com/v5/public/spot"
+ssl_context = ssl.create_default_context(cafile=certifi.where())
+
 
 
 @router.post("/register", tags=["auth"])
@@ -182,7 +189,7 @@ async def get_crypto(symbol: str):
             candles = (
                 session.query(Crypto)
                 .filter_by(symbol=symbol)
-                .order_by(Crypto.timestamp.asc())
+                .order_by(Crypto.timestamp.asc()) #asc фільтрує від старішої
                 .all()
             )
 
@@ -200,4 +207,35 @@ async def get_crypto(symbol: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.websocket("/wp-candles")
+async def websocket_crypto(websocket: WebSocket, symbol: str, interval="1"):
+    await websocket.accept()
+
+    try:
+        async with websockets.connect(BYBIT_WS, ssl=ssl_context) as bybit_ws:
+            sub_msg = {
+                "op": "subscribe",
+                "args": [f"kline.{interval}.{symbol}"]
+            }
+            await bybit_ws.send(json.dumps(sub_msg))
+
+            while True:
+                msg = await bybit_ws.recv()
+                data = json.loads(msg)
+
+                print("📩 Отримано від Bybit:", data)
+
+                if "topic" in data and "kline" in data["topic"]:
+                    await websocket.send_json(data)
+
+    except WebSocketDisconnect:
+        print("❌ Клієнт відключився")
+
+    except Exception as e:
+        print("❌ Помилка:", e)
+
+
+
 

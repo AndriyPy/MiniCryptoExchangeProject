@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Логін</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7f8;
+            margin: 0;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+            margin: 50px auto;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #d9534f; /* червоний для помилок */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>My Crypto Site</h1>
+        <nav>
+            <a href="/register.html">Register</a>
+            <a href="/login.html">Login</a>
+            <a href="/crypto.html">Candles Chart</a>
+            <a href="/profile.html">Profile</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h2>Логін</h2>
+        <label>Email: </label>
+        <input type="email" id="email" placeholder="example@email.com">
+
+        <label>Пароль: </label>
+        <input type="password" id="password" placeholder="Пароль">
+
+        <button onclick="loginUser()">Увійти</button>
+
+        <p id="message"></p>
+    </div>
+
+    <script>
+        async function loginUser() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const msg = document.getElementById('message');
+
+            if (!email || !password) {
+                msg.textContent = "Заповніть всі поля!";
+                msg.style.color = "#d9534f";
+                return;
+            }
+
+            try {
+                const res = await fetch("http://127.0.0.1:1489/login", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    msg.style.color = "#d9534f";
+                    msg.textContent = data.detail || "Помилка при вході";
+                    return;
+                }
+
+                msg.style.color = "green";
+                msg.textContent = data.message || "Вхід успішний!";
+            } catch (err) {
+                console.error(err);
+                msg.style.color = "#d9534f";
+                msg.textContent = "Помилка при відправці запиту";
+            }
+        }
+    </script>
+</body>
+</html>
