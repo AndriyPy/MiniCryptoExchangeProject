@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Login with Google</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background-color: #4285F4;
+            color: white;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #3367D6;
+        }
+    </style>
+</head>
+<body>
+    <button id="google-login">Увійти через Google</button>
+
+    <script>
+        const googleAuthUrl = "http://localhost:1489/google/url"; // бекенд, який редіректить на Google
+
+        document.getElementById("google-login").addEventListener("click", () => {
+            window.location.href = googleAuthUrl;
+        });
+    </script>
+</body>
+</html>

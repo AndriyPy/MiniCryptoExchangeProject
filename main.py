@@ -4,9 +4,12 @@ from backand.database.database import create_db_and_tables
 from backand.routes import router
 from fastapi.middleware.cors import CORSMiddleware
 
+
 app = FastAPI()
 
 app.include_router(router)
+
+
 
 
 # @app.on_event("startup")

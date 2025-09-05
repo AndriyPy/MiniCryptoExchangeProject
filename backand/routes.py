@@ -1,5 +1,16 @@
+from typing import Annotated
 import bcrypt
-from fastapi import HTTPException,APIRouter, Depends, Response, Query, WebSocket, WebSocketDisconnect, WebSocketException
+import jwt
+from fastapi import (
+    HTTPException,
+    APIRouter,
+    Depends,
+    Response,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+    WebSocketException,
+    Body)
 from backand.database.database import Session
 from backand.database.models import User as UserDbModel, Crypto
 from backand.auth.token_jwt import create_jwt_token, get_current_user, TokenData
@@ -8,14 +19,39 @@ from fastapi.responses import RedirectResponse
 import websockets
 import json
 import ssl, certifi
-
+from backand.auth.google_auth import generate_google_oauth_redirect_uri
+import aiohttp
+from backand.auth.config import settings
+import logging
 
 
 router = APIRouter()
 
+
+logger = logging.getLogger("myapp")
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+    file_handler = logging.FileHandler("py_log.log", mode="a", encoding="utf-8")  # append замість w
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+logger.propagate = False
+
+
+
+
 BYBIT_URL = "https://api.bybit.com/v5/market/kline"
 BYBIT_WS = "wss://stream.bybit.com/v5/public/spot"
+
 ssl_context = ssl.create_default_context(cafile=certifi.where())
+
 
 
 
@@ -49,9 +85,12 @@ async def register_user(user:User, response: Response):
                 httponly=True,
             )
 
+            logger.info(f"✅ User created successfully: {new_user.email}")
             return {"message": f"user {new_user.name} has been created"}
 
+
     except Exception as e:
+        logger.error(f"❌ Register error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -78,9 +117,11 @@ def login(user: UserLogin, response: Response):
                 httponly=True,
             )
 
+            logger.info(f"✅ User login successfully: {user.email}")
             return {"message": "✅ Login successful",}
 
     except Exception as e:
+        logger.error(f"❌Login error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -95,6 +136,7 @@ async def get_profile(current_user: TokenData = Depends(get_current_user)):
 @router.post("/logout", tags=["Profile"])
 async def logout(response: Response):
     response.delete_cookie(key="access_token")
+    logger.info("logout successful")
     return {"message": "✅ Logout successful"}
 
 
@@ -182,60 +224,132 @@ async def update_profile(response: Response, user:Update_User, current_user: Tok
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/candles", tags=["Crypto"])
-async def get_crypto(symbol: str):
-    try:
-        with Session() as session:
-            candles = (
-                session.query(Crypto)
-                .filter_by(symbol=symbol)
-                .order_by(Crypto.timestamp.asc()) #asc фільтрує від старішої
-                .all()
+
+@router.get("/google/url")
+def get_google_redirect_uri():
+    uri = generate_google_oauth_redirect_uri()
+    logger.info(f"🔗 Generated Google OAuth redirect URI: {uri}")
+    return RedirectResponse(url=uri, status_code=302)
+
+
+@router.post("/google/callback")
+async def handle_code(
+        code: Annotated[str, Body(embed=True)],
+        response: Response,
+):
+    google_token_url = "https://oauth2.googleapis.com/token"
+    logger.info(f"📥 Google callback triggered with code: {code}")
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            url=google_token_url,
+            data={
+                "client_id": settings.OAUTH_GOOGLE_CLIENT_ID,
+                "client_secret": settings.OAUTH_GOOGLE_CLIENT_SECRET,
+                "grant_type": "authorization_code",
+                "redirect_uri": "http://localhost:5500/google",
+                "code": code,
+            },
+            ssl=ssl_context
+        ) as google_res:
+            res = await google_res.json()
+            id_token = res["id_token"]
+            user_data = jwt.decode(
+                id_token,
+                algorithms=["RS256"],
+                options={"verify_signature": False}
             )
 
-            return [
-                {
-                    "timestamp": c.timestamp,
-                    "open": c.open,
-                    "high": c.high,
-                    "low": c.low,
-                    "close": c.close,
-                    "volume": c.volume
-                }
-                for c in candles
-            ]
+    email = user_data["email"]
+    name = user_data.get("name", "Google User")
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    with Session() as session:
+        user = session.query(UserDbModel).filter_by(email=email).first()
+        if not user:
+            new_user = UserDbModel(
+                name=name,
+                email=email,
+                password=""
+            )
+            session.add(new_user)
+            session.commit()
+            session.refresh(new_user)
+            logger.info(f"✅ New user created: {email}")
+        else:
+            new_user = user
+            logger.info(f"✅ Existing user logged: {email}")
 
+    new_jwt = create_jwt_token(
+        {"sub": new_user.email,
+         "user_id": new_user.id,
+         "scopes": ["user"]}
+    )
 
-@router.websocket("/wp-candles")
-async def websocket_crypto(websocket: WebSocket, symbol: str, interval="1"):
-    await websocket.accept()
+    response.set_cookie(
+        key="access_token",
+        value=new_jwt,
+        max_age=1800,
+        secure=False,
+        httponly=True,
+    )
 
-    try:
-        async with websockets.connect(BYBIT_WS, ssl=ssl_context) as bybit_ws:
-            sub_msg = {
-                "op": "subscribe",
-                "args": [f"kline.{interval}.{symbol}"]
-            }
-            await bybit_ws.send(json.dumps(sub_msg))
-
-            while True:
-                msg = await bybit_ws.recv()
-                data = json.loads(msg)
-
-                print("📩 Отримано від Bybit:", data)
-
-                if "topic" in data and "kline" in data["topic"]:
-                    await websocket.send_json(data)
-
-    except WebSocketDisconnect:
-        print("❌ Клієнт відключився")
-
-    except Exception as e:
-        print("❌ Помилка:", e)
+    return {"message":"successfully"}
 
 
+
+
+# @router.get("/candles", tags=["Crypto"])
+# async def get_crypto(symbol: str):
+#     try:
+#         with Session() as session:
+#             candles = (
+#                 session.query(Crypto)
+#                 .filter_by(symbol=symbol)
+#                 .order_by(Crypto.timestamp.asc()) #asc фільтрує від старішої
+#                 .all()
+#             )
+#
+#             return [
+#                 {
+#                     "timestamp": c.timestamp,
+#                     "open": c.open,
+#                     "high": c.high,
+#                     "low": c.low,
+#                     "close": c.close,
+#                     "volume": c.volume
+#                 }
+#                 for c in candles
+#             ]
+#
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+#
+#
+# @router.websocket("/wp-candles")
+# async def websocket_crypto(websocket: WebSocket, symbol: str, interval="1"):
+#     await websocket.accept()
+#
+#     try:
+#         async with websockets.connect(BYBIT_WS, ssl=ssl_context) as bybit_ws:
+#             sub_msg = {
+#                 "op": "subscribe",
+#                 "args": [f"kline.{interval}.{symbol}"]
+#             }
+#             await bybit_ws.send(json.dumps(sub_msg))
+#
+#             while True:
+#                 msg = await bybit_ws.recv()
+#                 data = json.loads(msg)
+#
+#                 print("📩 Отримано від Bybit:", data)
+#
+#                 if "topic" in data and "kline" in data["topic"]:
+#                     await websocket.send_json(data)
+#
+#     except WebSocketDisconnect:
+#         print("❌ Клієнт відключився")
+#
+#     except Exception as e:
+#         print("❌ Помилка:", e)
 
 
