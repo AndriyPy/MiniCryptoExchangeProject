@@ -6,7 +6,7 @@ import urllib.parse
 def generate_google_oauth_redirect_uri():
     query_params = {
         "client_id":settings.OAUTH_GOOGLE_CLIENT_ID,
-        "redirect_uri":"http://localhost:5500/google",
+        "redirect_uri":"http://127.0.0.1:1489/google/callback",
         "response_type":"code",
         "scope": " ".join([
             "openid",
