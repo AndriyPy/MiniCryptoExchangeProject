@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Available Cryptocurrencies</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f7f8;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        header h1 a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        main {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        li a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        li a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1><a href="index.html">My Crypto Site</a></h1>
+    <nav>
+        <a href="register.html">Register</a>
+        <a href="login.html">Login</a>
+        <a href="crypto.html">Candles Chart</a>
+        <a href="profile.html">Profile</a>
+    </nav>
+</header>
+
+<main>
+    <h2>Available Cryptocurrencies</h2>
+    <ul id="crypto-list">
+        <li>Loading...</li>
+    </ul>
+</main>
+
+<script>
+async function loadCryptos() {
+    try {
+        const response = await fetch("http://127.0.0.1:1489/index", {
+            credentials: "include"
+        });
+
+        if (!response.ok) throw new Error("Failed to load cryptos");
+
+        const cryptos = await response.json();
+        const list = document.getElementById("crypto-list");
+        list.innerHTML = "";
+
+        cryptos.forEach(c => {
+            const li = document.createElement("li");
+            const link = document.createElement("a");
+            link.href = `chart/${c.symbol}`; // відносний шлях до графіку
+            link.textContent = c.symbol;
+            li.appendChild(link);
+            list.appendChild(li);
+        });
+    } catch (err) {
+        console.error(err);
+        document.getElementById("crypto-list").innerHTML = "<li>Error loading cryptos</li>";
+    }
+}
+
+loadCryptos();
+</script>
+
+</body>
+</html>

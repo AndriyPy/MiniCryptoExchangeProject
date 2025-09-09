@@ -54,6 +54,15 @@ ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 
 
+@router.get("/index")
+async def index():
+    try:
+        with Session() as session:
+            symbols = session.query(Crypto.symbol).distinct().all()
+            return [{"symbol": s[0]} for s in symbols]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/register", tags=["auth"])
 async def register_user(user:User, response: Response):
