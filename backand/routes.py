@@ -53,6 +53,26 @@ BYBIT_WS = "wss://stream.bybit.com/v5/public/spot"
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 
+@router.get("/index")
+async def index(current_user: TokenData = Depends(get_current_user)):
+    if not current_user:
+        return RedirectResponse("/register")
+    try:
+        with Session() as session:
+            crypto = session.query(Crypto).all()
+
+            return [
+                {
+                    "id": i.id,
+                    "symbol": i.symbol
+                }
+                for i in crypto
+            ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 
 
 @router.post("/register", tags=["auth"])

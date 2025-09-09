@@ -1,7 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
-from sqlalchemy import Column, Integer, String, DateTime, UniqueConstraint, Float
+from sqlalchemy import Column, Integer, String, DateTime, UniqueConstraint, Float, Boolean
 from sqlalchemy.sql import func
 from typing import Optional
 import bcrypt
@@ -18,6 +18,9 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[Optional[DateTime]] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+
+    admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    verified_email: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class Crypto(Base):

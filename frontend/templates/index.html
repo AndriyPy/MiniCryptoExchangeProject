@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto List</title>
+</head>
+<body>
+    <h1>Available Cryptocurrencies</h1>
+    <ul id="crypto-list"></ul>
+
+    <script>
+        async function loadCryptos() {
+            try {
+                let response = await fetch("/index");
+                if (!response.ok) {
+                    throw new Error("Failed to load cryptos");
+                }
+                let cryptos = await response.json();
+
+                let list = document.getElementById("crypto-list");
+                list.innerHTML = "";
+
+                cryptos.forEach(c => {
+                    let li = document.createElement("li");
+                    let link = document.createElement("a");
+                    link.href = `/chart/${c.symbol}`;
+                    link.textContent = c.symbol;
+                    li.appendChild(link);
+                    list.appendChild(li);
+                });
+            } catch (err) {
+                console.error(err);
+                document.getElementById("crypto-list").innerHTML = "<li>Error loading cryptos</li>";
+            }
+        }
+
+        loadCryptos();
+    </script>
+</body>
+</html>
