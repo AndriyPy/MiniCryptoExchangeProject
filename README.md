@@ -1,4 +1,4 @@
-# My Crypto Site Backend
+# My Mini Crypto Site
 
 This project is a **FastAPI backend** for user management, authentication, email verification, Google OAuth, and working with cryptocurrency data from Bybit.
 
