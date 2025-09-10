@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Профіль користувача</title>
+    <title>User profile</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -152,41 +152,41 @@
 </header>
 
 <div class="container">
-    <h2>Ваш профіль</h2>
+    <h2>Your profile</h2>
     <div class="info">
-        <p><strong>Ім'я:</strong> <span id="name">Завантаження...</span></p>
+        <p><strong>NAME:</strong> <span id="name">Завантаження...</span></p>
         <p><strong>Email:</strong> <span id="email">Завантаження...</span></p>
-        <p><strong>Дата створення:</strong> <span id="created">Завантаження...</span></p>
-        <p><strong>Email підтверджено:</strong> <span id="emailVerified">Завантаження...</span></p>
+        <p><strong>Creation date:</strong> <span id="created">Завантаження...</span></p>
+        <p><strong>Email is confirmed:</strong> <span id="emailVerified">Завантаження...</span></p>
         <button id="verifyEmailBtn" style="display:none;" onclick="sendVerifyEmail()">Підтвердити email</button>
     </div>
 
     <div class="actions">
-        <button id="updateBtn" onclick="openModal()">Оновити профіль</button>
-        <button id="deleteBtn" onclick="deleteProfile()">Видалити профіль</button>
-        <button id="logoutBtn" onclick="logout()">Вийти</button>
+        <button id="updateBtn" onclick="openModal()">Update profile</button>
+        <button id="deleteBtn" onclick="deleteProfile()">Delete profile</button>
+        <button id="logoutBtn" onclick="logout()">Log out</button>
     </div>
 </div>
 
 <!-- Модальне вікно -->
 <div class="modal" id="updateModal">
     <div class="modal-content">
-        <h3>Оновлення профілю</h3>
-        <label>Нове ім'я</label>
+        <h3>Profile update</h3>
+        <label>New name</label>
         <input type="text" id="newName">
 
-        <label>Новий email</label>
+        <label>New email</label>
         <input type="email" id="newEmail">
 
-        <label>Новий пароль</label>
+        <label>New password</label>
         <input type="password" id="newPassword">
 
-        <label>Повторіть пароль</label>
+        <label>Repeat the password</label>
         <input type="password" id="confirmPassword">
 
         <div class="modal-actions">
-            <button onclick="submitUpdate()">Зберегти</button>
-            <button onclick="closeModal()">Скасувати</button>
+            <button onclick="submitUpdate()">Save</button>
+            <button onclick="closeModal()">Cancel</button>
         </div>
     </div>
 </div>
@@ -212,10 +212,10 @@
 
             // Перевірка підтвердження email
             if (data.verified_email) {
-                document.getElementById("emailVerified").textContent = "✅ Так";
+                document.getElementById("emailVerified").textContent = "✅ Yes";
                 document.getElementById("verifyEmailBtn").style.display = "none";
             } else {
-                document.getElementById("emailVerified").textContent = "❌ Ні";
+                document.getElementById("emailVerified").textContent = "❌ No";
                 document.getElementById("verifyEmailBtn").style.display = "inline-block";
             }
 
@@ -231,10 +231,10 @@
         });
 
         if (res.ok) {
-            alert("✅ Лист для підтвердження email відправлено! Перевірте пошту.");
+            alert("✅ Email confirmation letter sent! Check your email.");
         } else {
             const data = await res.json();
-            alert(data.detail || "Помилка при відправці листа");
+            alert(data.detail || "Error sending email");
         }
     }
 
@@ -247,7 +247,7 @@
     }
 
     async function deleteProfile() {
-        if (!confirm("Точно видалити профіль?")) return;
+        if (!confirm("Delete profile exactly?")) return;
 
         const res = await fetch("http://127.0.0.1:1489/delete_profile", {
             method: "DELETE",
@@ -255,7 +255,7 @@
         });
 
         if (res.ok) {
-            alert("Профіль видалено");
+            alert("Profile deleted");
             window.location.href = "/register.html";
         }
     }
@@ -293,7 +293,7 @@
             return;
         }
 
-        alert("✅ Профіль оновлено");
+        alert("✅ Profile updated");
         closeModal();
         loadProfile();
     }

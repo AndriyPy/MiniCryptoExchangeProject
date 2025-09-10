@@ -4,8 +4,6 @@ import os
 
 
 
-
-
 USERNAME = os.getenv("USERNAME", "fallback_secret_key")
 PASSWORD = os.getenv("PASSWORD", "HS256")
 

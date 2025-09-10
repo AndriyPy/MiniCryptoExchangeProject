@@ -378,7 +378,7 @@ async def websocket_crypto(websocket: WebSocket, symbol: str, interval="1"):
         print("❌ Клієнт відключився")
 
     except Exception as e:
-        print("❌ Помилка:", e)
+        print("❌ error:", e)
 
 
 
@@ -405,7 +405,7 @@ async def verify_email(current_user: TokenData = Depends(get_current_user)):
             return {"message":"посалання відправилося користувачу"}
 
     except Exception as e:
-        print("❌ Помилка:", e)
+        print("❌ error:", e)
 
 
 @router.get("/verify_email_confirm", tags=["auth"])
@@ -422,6 +422,7 @@ async def confirm_email(token: str = Query(...)):
             user.verified_email = True
             session.commit()
 
+        logger.info(f"✅user: {user.email} confirmed email")
         return RedirectResponse("http://127.0.0.1:5500/profile.html")
 
     except jwt.InvalidTokenError:
@@ -433,22 +434,19 @@ async def confirm_email(token: str = Query(...)):
 async def admin(symbol: str, interval: str = "60", current_user: TokenData = Depends(get_current_user)):
     try:
         with Session() as session:
-            existing_user = session.query(UserDbModel).filter(UserDbModel.email == current_user.email).first()
+            user = session.query(UserDbModel).filter_by(id=current_user.user_id).first()
 
-            if not existing_user:
+            if not user:
                 raise HTTPException(status_code=401, detail="you are not authorized")
 
-            if existing_user.verified_email == True:
+            if not user.admin:
+                raise HTTPException(status_code=403, detail="you are not admin")
 
-                candles = fetch_last_month_klines(symbol=symbol, interval=interval)
-                save_klines(candles, symbol=symbol, interval=interval)
+            candles = fetch_last_month_klines(symbol=symbol, interval=interval)
+            save_klines(candles, symbol=symbol, interval=interval)
 
-                logger.info(f"✅ New {symbol} added successfully by {existing_user.email}")
-
-                return {"message":f"crypto {symbol} saved successfully"}
-
-            else:
-                raise HTTPException(status_code=401, detail="you are not admin")
+            logger.info(f"✅ New {symbol} added successfully by {user.email}")
+            return {"message":f"crypto {symbol} saved successfully"}
 
     except Exception as e:
-        print("❌ Помилка:", e)
+        print("❌ error:", e)

@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Реєстрація користувача</title>
+    <title>User registration</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f7f8; margin: 0; }
         header { background-color: #007bff; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
@@ -33,15 +33,15 @@
 </header>
 
     <div class="container">
-        <h2>Реєстрація</h2>
-        <label>Ім'я: </label>
-        <input type="text" id="name" placeholder="Ваше ім'я">
+        <h2>Register</h2>
+        <label>Name: </label>
+        <input type="text" id="name" placeholder="Your name">
         <label>Email: </label>
         <input type="email" id="email" placeholder="example@email.com">
-        <label>Пароль: </label>
-        <input type="password" id="password" placeholder="Пароль">
-        <button id="register-btn">Зареєструватися</button>
-        <button id="google-login">Увійти через Google</button>
+        <label>Password: </label>
+        <input type="password" id="password" placeholder="Password">
+        <button id="register-btn">Sign up</button>
+        <button id="google-login">Sign in with Google</button>
         <p id="message"></p>
     </div>
 
@@ -55,7 +55,7 @@ document.getElementById('register-btn').addEventListener('click', async () => {
     const password = document.getElementById('password').value.trim();
 
     if (!name || !email || !password) {
-        msg.textContent = "Заповніть всі поля!";
+        msg.textContent = "Fill in all fields!";
         msg.style.color = "#d9534f";
         return;
     }
@@ -70,7 +70,7 @@ document.getElementById('register-btn').addEventListener('click', async () => {
 
         const data = await res.json();
         msg.style.color = res.ok ? "green" : "#d9534f";
-        msg.textContent = data.message || data.detail || "Помилка при реєстрації";
+        msg.textContent = data.message || data.detail || "Error during registration";
 
         // --- Редірект після успішної реєстрації ---
         if (res.ok) {
@@ -80,7 +80,7 @@ document.getElementById('register-btn').addEventListener('click', async () => {
     } catch (err) {
         console.error(err);
         msg.style.color = "#d9534f";
-        msg.textContent = "Помилка при відправці запиту";
+        msg.textContent = "Error sending request";
     }
 });
 

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Логін</title>
+    <title>Login</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -78,6 +78,7 @@
             font-size: 16px;
             cursor: pointer;
             transition: background 0.3s;
+            margin-bottom: 10px;
         }
 
         button:hover {
@@ -87,13 +88,13 @@
         #message {
             margin-top: 15px;
             font-weight: bold;
-            color: #d9534f; /* червоний для помилок */
+            color: #d9534f;
         }
     </style>
 </head>
 <body>
 <header>
-        <h1><a href="index.html" style="text-decoration: none; color: inherit;">My Crypto Site</a></h1>
+    <h1><a href="index.html" style="text-decoration: none; color: inherit;">My Crypto Site</a></h1>
 
     <nav>
         <a href="/register.html">Register</a>
@@ -103,55 +104,65 @@
     </nav>
 </header>
 
-    <div class="container">
-        <h2>Логін</h2>
-        <label>Email: </label>
-        <input type="email" id="email" placeholder="example@email.com">
+<div class="container">
+    <h2>Login</h2>
+    <label>Email:</label>
+    <input type="email" id="email" placeholder="example@email.com">
 
-        <label>Пароль: </label>
-        <input type="password" id="password" placeholder="Пароль">
+    <label>Password:</label>
+    <input type="password" id="password" placeholder="Password">
 
-        <button onclick="loginUser()">Увійти</button>
+    <button onclick="loginUser()">Sign in</button>
+    <button id="google-login">Sign in with Google</button>
 
-        <p id="message"></p>
-    </div>
+    <p id="message"></p>
+</div>
 
-    <script>
-        async function loginUser() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const msg = document.getElementById('message');
+<script>
+    async function loginUser() {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const msg = document.getElementById('message');
 
-            if (!email || !password) {
-                msg.textContent = "Заповніть всі поля!";
+        if (!email || !password) {
+            msg.textContent = "Please fill in all fields!";
+            msg.style.color = "#d9534f";
+            return;
+        }
+
+        try {
+            const res = await fetch("http://127.0.0.1:1489/login", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
                 msg.style.color = "#d9534f";
+                msg.textContent = data.detail || "Error logging in";
                 return;
             }
 
-            try {
-                const res = await fetch("http://127.0.0.1:1489/login", {
-                    method: "POST",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password })
-                });
+            msg.style.color = "green";
+            msg.textContent = data.message || "Login successful!";
+            // Redirect to profile page after successful login
+            setTimeout(() => window.location.href = "/profile.html", 1000);
 
-                const data = await res.json();
-
-                if (!res.ok) {
-                    msg.style.color = "#d9534f";
-                    msg.textContent = data.detail || "Помилка при вході";
-                    return;
-                }
-
-                msg.style.color = "green";
-                msg.textContent = data.message || "Вхід успішний!";
-            } catch (err) {
-                console.error(err);
-                msg.style.color = "#d9534f";
-                msg.textContent = "Помилка при відправці запиту";
-            }
+        } catch (err) {
+            console.error(err);
+            msg.style.color = "#d9534f";
+            msg.textContent = "Error sending request";
         }
-    </script>
+    }
+
+    // --- Google login ---
+    document.getElementById('google-login').addEventListener('click', () => {
+        // Direct redirect to server endpoint, server will redirect to Google
+        window.location.href = "http://127.0.0.1:1489/google/url";
+    });
+</script>
 </body>
 </html>

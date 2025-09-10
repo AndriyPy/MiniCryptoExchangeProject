@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Crypto (Admin)</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; background: #f4f7f8; }
+    .box { max-width: 320px; margin: 50px auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,.1); }
+    label { display:block; margin-top:10px; font-weight:bold; }
+    input { width:100%; padding:8px; margin-top:5px; border:1px solid #ccc; border-radius:5px; }
+    button { margin-top:15px; padding:10px; width:100%; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer; }
+    button:hover { background:#0056b3; }
+    #status { margin-top:12px; font-weight:bold; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h3>Add Crypto</h3>
+    <label>Symbol:</label>
+    <input id="symbol" value="BTCUSDT">
+
+    <label>Interval:</label>
+    <input id="interval" value="60">
+
+    <button onclick="send()">Send</button>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    async function send() {
+      const symbol = document.getElementById("symbol").value.trim();
+      const interval = document.getElementById("interval").value.trim();
+      const status = document.getElementById("status");
+
+      if (!symbol) { status.textContent = "Enter symbol"; status.style.color="red"; return; }
+
+      try {
+        const res = await fetch(`http://127.0.0.1:1489/admin_add_crypto?symbol=${symbol}&interval=${interval}`, {
+          method: "POST",
+          credentials: "include"
+        });
+        const data = await res.json();
+        if (res.ok) {
+          status.style.color = "green";
+          status.textContent = data.message || "Success!";
+        } else {
+          status.style.color = "red";
+          status.textContent = data.detail || "Error";
+        }
+      } catch (err) {
+        status.style.color = "red";
+        status.textContent = "You are not admin";
+      }
+    }
+  </script>
+</body>
+</html>
