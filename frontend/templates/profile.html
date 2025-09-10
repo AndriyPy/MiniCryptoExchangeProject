@@ -85,6 +85,9 @@
         #deleteBtn { background: #6c757d; color: #fff; }
         #deleteBtn:hover { background: #5a6268; }
 
+        #verifyEmailBtn { background: #28a745; color: #fff; }
+        #verifyEmailBtn:hover { background: #218838; }
+
         /* --- Модальне вікно --- */
         .modal {
             display: none;
@@ -154,6 +157,8 @@
         <p><strong>Ім'я:</strong> <span id="name">Завантаження...</span></p>
         <p><strong>Email:</strong> <span id="email">Завантаження...</span></p>
         <p><strong>Дата створення:</strong> <span id="created">Завантаження...</span></p>
+        <p><strong>Email підтверджено:</strong> <span id="emailVerified">Завантаження...</span></p>
+        <button id="verifyEmailBtn" style="display:none;" onclick="sendVerifyEmail()">Підтвердити email</button>
     </div>
 
     <div class="actions">
@@ -204,8 +209,32 @@
             document.getElementById("name").textContent = data.name;
             document.getElementById("email").textContent = data.email;
             document.getElementById("created").textContent = data.created_at;
+
+            // Перевірка підтвердження email
+            if (data.verified_email) {
+                document.getElementById("emailVerified").textContent = "✅ Так";
+                document.getElementById("verifyEmailBtn").style.display = "none";
+            } else {
+                document.getElementById("emailVerified").textContent = "❌ Ні";
+                document.getElementById("verifyEmailBtn").style.display = "inline-block";
+            }
+
         } catch (err) {
             console.error("Помилка:", err);
+        }
+    }
+
+    async function sendVerifyEmail() {
+        const res = await fetch("http://127.0.0.1:1489/verify_email", {
+            method: "POST",
+            credentials: "include"
+        });
+
+        if (res.ok) {
+            alert("✅ Лист для підтвердження email відправлено! Перевірте пошту.");
+        } else {
+            const data = await res.json();
+            alert(data.detail || "Помилка при відправці листа");
         }
     }
 

@@ -13,7 +13,7 @@ from fastapi import (
     Body)
 from backand.database.database import Session
 from backand.database.models import User as UserDbModel, Crypto
-from backand.auth.token_jwt import create_jwt_token, get_current_user, TokenData
+from backand.auth.token_jwt import create_jwt_token, get_current_user, TokenData, decode_jwt
 from backand.py_models import User, UserLogin, Update_User
 from fastapi.responses import RedirectResponse
 import websockets
@@ -23,6 +23,8 @@ from backand.auth.google_auth import generate_google_oauth_redirect_uri
 import aiohttp
 from backand.auth.config import settings
 import logging
+from backand.bbb import *
+from backand.send_email import send_email
 
 
 router = APIRouter()
@@ -146,7 +148,8 @@ async def get_profile(current_user: TokenData = Depends(get_current_user)):
             "id": user.id,
             "name": user.name,
             "email": user.email,
-            "created_at": user.created_at.isoformat()
+            "created_at": user.created_at.isoformat(),
+            "verified_email":user.verified_email,
         }
 
 
@@ -241,14 +244,14 @@ async def update_profile(response: Response, user:Update_User, current_user: Tok
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/google/url")
+@router.get("/google/url", tags=["auth"])
 def get_google_redirect_uri():
     uri = generate_google_oauth_redirect_uri()
     logger.info(f"🔗 Generated Google OAuth redirect URI: {uri}")
     return RedirectResponse(url=uri, status_code=302)
 
 
-@router.get("/google/callback")
+@router.get("/google/callback", tags=["auth"])
 async def handle_code(
         response: Response,
         code: str = Query(...),
@@ -378,3 +381,74 @@ async def websocket_crypto(websocket: WebSocket, symbol: str, interval="1"):
         print("❌ Помилка:", e)
 
 
+
+@router.post("/verify_email", tags=["auth"])
+async def verify_email(current_user: TokenData = Depends(get_current_user)):
+    try:
+        with Session() as session:
+            user = session.query(UserDbModel).filter_by(id=current_user.user_id).first()
+
+            if not user:
+                raise HTTPException(status_code=404, detail="user not found")
+
+            token = create_jwt_token(
+                {"sub": user.email,
+                 "user_id": user.id,
+                 "scopes": ["verify_email"]},
+                expires_delta=timedelta(minutes=5)
+            )
+
+            link = f"http://127.0.0.1:1489/verify_email_confirm?token={token}"
+
+            send_email(user_name=user.name, user_email=user.email, link=link)
+
+            return {"message":"посалання відправилося користувачу"}
+
+    except Exception as e:
+        print("❌ Помилка:", e)
+
+
+@router.get("/verify_email_confirm", tags=["auth"])
+async def confirm_email(token: str = Query(...)):
+    try:
+        payload = decode_jwt(token)
+        user_id = payload.get("user_id")
+
+        with Session() as session:
+            user = session.query(UserDbModel).filter_by(id=user_id).first()
+            if not user:
+                raise HTTPException(status_code=404, detail="user not found")
+
+            user.verified_email = True
+            session.commit()
+
+        return RedirectResponse("http://127.0.0.1:5500/profile.html")
+
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+
+
+@router.post("/admin_add_crypto", tags=["Crypto"])
+async def admin(symbol: str, interval: str = "60", current_user: TokenData = Depends(get_current_user)):
+    try:
+        with Session() as session:
+            existing_user = session.query(UserDbModel).filter(UserDbModel.email == current_user.email).first()
+
+            if not existing_user:
+                raise HTTPException(status_code=401, detail="you are not authorized")
+
+            if existing_user.verified_email == True:
+
+                candles = fetch_last_month_klines(symbol=symbol, interval=interval)
+                save_klines(candles, symbol=symbol, interval=interval)
+
+                logger.info(f"✅ New {symbol} added successfully by {existing_user.email}")
+
+                return {"message":f"crypto {symbol} saved successfully"}
+
+            else:
+                raise HTTPException(status_code=401, detail="you are not admin")
+
+    except Exception as e:
+        print("❌ Помилка:", e)

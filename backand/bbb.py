@@ -88,6 +88,6 @@ def save_klines(candles, symbol="ETHUSDT", interval="1h"):
 
 
 # --- RUN EXAMPLE ---
-if __name__ == "__main__":
-    candles = fetch_last_month_klines("ETHUSDT", interval="60")
-    save_klines(candles, "ETHUSDT", "1h")
+# if __name__ == "__main__":
+#     candles = fetch_last_month_klines("ETHUSDT", interval="60")
+#     save_klines(candles, "ETHUSDT", "1h")
