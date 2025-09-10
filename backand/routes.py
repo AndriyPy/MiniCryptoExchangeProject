@@ -324,18 +324,25 @@ async def handle_code(
     return response
 
 
-
-
 @router.get("/candles", tags=["Crypto"])
-async def get_crypto(symbol: str):
+async def get_crypto(symbol:str= Query(...), current_user: TokenData = Depends(get_current_user)):
     try:
         with Session() as session:
+
+            user = session.query(UserDbModel).filter_by(id=current_user.user_id).first()
+            if not user:
+                raise HTTPException(status_code=401, detail="You are not authorized")
+            if not user.verified_email:
+                raise HTTPException(status_code=401, detail="Email not verified")
+
+
             candles = (
                 session.query(Crypto)
                 .filter_by(symbol=symbol)
                 .order_by(Crypto.timestamp.asc()) #asc фільтрує від старішої
                 .all()
             )
+
 
             return [
                 {

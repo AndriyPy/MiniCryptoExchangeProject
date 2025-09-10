@@ -41,8 +41,8 @@
         }
 
         main {
-            max-width: 600px;
-            margin: 50px auto;
+            max-width: 800px;
+            margin: 40px auto;
             padding: 20px;
             background: #fff;
             border-radius: 12px;
@@ -54,22 +54,47 @@
             color: #333;
         }
 
-        ul {
-            list-style: none;
+        #search {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+        }
+
+        #crypto-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             padding: 0;
+            margin: 0;
         }
 
-        li {
-            margin: 10px 0;
+        .crypto-item {
+            background: #f9fbfd;
+            border: 1px solid #e1e8ed;
+            border-left: 6px solid #007bff;
+            border-radius: 8px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+            list-style: none;
         }
 
-        li a {
+        .crypto-item:hover {
+            background: #eef6ff;
+            transform: translateX(5px);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+        }
+
+        .crypto-item a {
             text-decoration: none;
-            color: #007bff;
+            font-size: 18px;
             font-weight: bold;
+            color: #007bff;
         }
 
-        li a:hover {
+        .crypto-item a:hover {
             text-decoration: underline;
         }
     </style>
@@ -88,12 +113,15 @@
 
 <main>
     <h2>Available Cryptocurrencies</h2>
+    <input type="text" id="search" placeholder="Search by symbol...">
     <ul id="crypto-list">
-        <li>Loading...</li>
+        <li class="crypto-item">Loading...</li>
     </ul>
 </main>
 
 <script>
+let allCryptos = [];
+
 async function loadCryptos() {
     try {
         const response = await fetch("http://127.0.0.1:1489/index", {
@@ -102,23 +130,33 @@ async function loadCryptos() {
 
         if (!response.ok) throw new Error("Failed to load cryptos");
 
-        const cryptos = await response.json();
-        const list = document.getElementById("crypto-list");
-        list.innerHTML = "";
-
-        cryptos.forEach(c => {
-            const li = document.createElement("li");
-            const link = document.createElement("a");
-            link.href = `chart/${c.symbol}`; // відносний шлях до графіку
-            link.textContent = c.symbol;
-            li.appendChild(link);
-            list.appendChild(li);
-        });
+        allCryptos = await response.json();
+        renderList(allCryptos);
     } catch (err) {
         console.error(err);
-        document.getElementById("crypto-list").innerHTML = "<li>Error loading cryptos</li>";
+        document.getElementById("crypto-list").innerHTML = "<li class='crypto-item'>Error loading cryptos</li>";
     }
 }
+
+function renderList(cryptos) {
+    const list = document.getElementById("crypto-list");
+    list.innerHTML = "";
+    cryptos.forEach(c => {
+        const li = document.createElement("li");
+        li.className = "crypto-item";
+        const link = document.createElement("a");
+        link.href = `http://127.0.0.1:5500/crypto.html?symbol=${c.symbol}`;
+        link.textContent = c.symbol;
+        li.appendChild(link);
+        list.appendChild(li);
+    });
+}
+
+document.getElementById("search").addEventListener("input", (e) => {
+    const value = e.target.value.toUpperCase();
+    const filtered = allCryptos.filter(c => c.symbol.toUpperCase().includes(value));
+    renderList(filtered);
+});
 
 loadCryptos();
 </script>

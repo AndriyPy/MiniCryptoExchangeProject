@@ -1,184 +1,138 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>cryptocurrency chart</title>
+    <title>Crypto Chart</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: #e2f0f7;
+        html, body {
             margin: 0;
-            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
         }
-
         header {
-            background-color: #007bff;
-            color: white;
-            padding: 15px 30px;
+            background: #007bff;
+            color: #fff;
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            height: 50px;
         }
-
         header h1 {
             margin: 0;
-            font-size: 24px;
+            font-size: 20px;
         }
-
         nav a {
             color: white;
             text-decoration: none;
-            margin-left: 20px;
+            margin-left: 15px;
             font-weight: bold;
         }
-
         nav a:hover {
             text-decoration: underline;
         }
-
         .container {
+            height: calc(100vh - 50px); /* 100% екрану мінус хедер */
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            padding: 30px;
         }
-
-        h2 {
-            color: #1b3a57;
-            margin-bottom: 25px;
-        }
-
-        .input-container {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        input[type="text"] {
-            padding: 12px;
-            border-radius: 8px;
-            border: 2px solid #007bff;
-            font-size: 16px;
-            width: 220px;
-        }
-
-        button {
-            padding: 12px 25px;
-            border-radius: 8px;
-            border: none;
-            background-color: #007bff;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
         #chart {
             width: 100%;
-            max-width: 950px;
-            height: 600px;
-            background: #fff;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            height: 100%;
         }
     </style>
 </head>
 <body>
-
 <header>
-    <h1><a href="/index.html" style="text-decoration: none; color: inherit;">My Crypto Site</a></h1>
-
+    <h1><a href="index.html" style="text-decoration: none; color: inherit;">My Crypto Site</a></h1>
     <nav>
-        <a href="/register.html">Register</a>
-        <a href="/login.html">Login</a>
-        <a href="/crypto.html">Candles Chart</a>
-        <a href="/profile.html">Profile</a>
+        <a href="register.html">Register</a>
+        <a href="login.html">Login</a>
+        <a href="crypto.html">Candles Chart</a>
+        <a href="profile.html">Profile</a>
     </nav>
 </header>
 
 <div class="container">
-    <div class="input-container">
-        <input type="text" id="symbol" value="TONUSDT" placeholder="Введіть символ">
-        <button onclick="fetchCandles()">Показати графік</button>
-    </div>
-
     <div id="chart"></div>
 </div>
 
 <script>
     let ws = null;
+    let candlesData = [];
 
-    async function fetchCandles() {
-        const symbol = document.getElementById('symbol').value.trim();
-        if (!symbol) return alert("Введіть символ!");
+    // беремо символ з параметра URL
+    const params = new URLSearchParams(window.location.search);
+    const symbol = params.get("symbol") || "BTCUSDT";
 
+    async function loadCandles() {
         try {
-            const res = await fetch(`http://127.0.0.1:1489/candles?symbol=${symbol}`);
+            const res = await fetch(`http://127.0.0.1:1489/candles?symbol=${symbol}`, {
+                                            credentials: "include"
+                                        })
+
             const data = await res.json();
 
             if (!data.length) {
-                alert("Свічок немає в БД для цього символу");
+                alert("No candles found in DB for this symbol");
                 return;
             }
 
-            const trace = {
-                x: data.map(c => new Date(c.timestamp * 1000)),
-                open: data.map(c => c.open),
-                high: data.map(c => c.high),
-                low: data.map(c => c.low),
-                close: data.map(c => c.close),
-                type: 'candlestick',
-                increasing: { line: { color: 'green' } },
-                decreasing: { line: { color: 'red' } }
-            };
+            candlesData = data.map(c => ({
+                x: new Date(c.timestamp * 1000),
+                open: c.open,
+                high: c.high,
+                low: c.low,
+                close: c.close
+            }));
 
-            Plotly.newPlot('chart', [trace], {
-                title: symbol,
-                xaxis: {title: 'Час'},
-                yaxis: {title: 'Ціна'}
-            });
+            drawChart();
 
-            // Закриваємо старий WebSocket, якщо він був
             if (ws) ws.close();
-
-            // Відкриваємо WebSocket підключення до бекенду
             ws = new WebSocket(`ws://127.0.0.1:1489/wp-candles?symbol=${symbol}`);
-
             ws.onmessage = (event) => {
                 const msg = JSON.parse(event.data);
-
                 if (msg.data && msg.data.length > 0) {
-                    const candle = msg.data[0]; // Bybit відправляє масив
-                    const time = new Date(candle.start * 1000);
-
-                    // Додаємо нову свічку у графік
-                    Plotly.extendTraces('chart', {
-                        x: [[time]],
-                        open: [[parseFloat(candle.open)]],
-                        high: [[parseFloat(candle.high)]],
-                        low: [[parseFloat(candle.low)]],
-                        close: [[parseFloat(candle.close)]]
-                    }, [0]);
+                    const candle = msg.data[0];
+                    candlesData.push({
+                        x: new Date(candle.start * 1000),
+                        open: parseFloat(candle.open),
+                        high: parseFloat(candle.high),
+                        low: parseFloat(candle.low),
+                        close: parseFloat(candle.close)
+                    });
+                    drawChart();
                 }
             };
-
-            ws.onclose = () => {
-                console.log("🔌 WebSocket закрито");
-            };
-
         } catch (err) {
-            console.error("Помилка при завантаженні:", err);
-            alert("Помилка при отриманні даних");
+            console.error("Error loading:", err);
+            alert("Failed to fetch candles");
         }
     }
-</script>
 
+    function drawChart() {
+        const trace = {
+            x: candlesData.map(c => c.x),
+            open: candlesData.map(c => c.open),
+            high: candlesData.map(c => c.high),
+            low: candlesData.map(c => c.low),
+            close: candlesData.map(c => c.close),
+            type: 'candlestick',
+            increasing: { line: { color: 'green' } },
+            decreasing: { line: { color: 'red' } }
+        };
+
+        Plotly.newPlot('chart', [trace], {
+            title: symbol,
+            xaxis: { title: 'Time' },
+            yaxis: { title: 'Price' }
+        }, {responsive: true});
+    }
+
+    loadCandles();
+</script>
 </body>
 </html>
