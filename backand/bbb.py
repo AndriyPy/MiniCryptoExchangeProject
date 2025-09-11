@@ -1,46 +1,29 @@
-import requests
-import time
 from datetime import datetime, timedelta
+import time
+import requests
 from backand.database.database import Session
 from backand.database.models import Crypto
-
-
-with Session() as session:
-    candles = session.query(Crypto).filter_by(symbol="TONUSDT").order_by(Crypto.timestamp).all()
-    for c in candles:
-        print(c.timestamp, c.open, c.high, c.low, c.close, c.volume)
 
 # --- FETCH KLINES ---
 def fetch_klines(symbol="TONUSDT", interval="60", start=None, limit=200):
     url = "https://api.bybit.com/v5/market/kline"
-    params = {
-        "category": "spot",
-        "symbol": symbol,
-        "interval": interval,
-        "limit": limit
-    }
+    params = {"category": "spot", "symbol": symbol, "interval": interval, "limit": limit}
     if start:
         params["start"] = start
-
-    print(f"🔍 Запит: {params}")  # логування
-
+    print(f"🔍 Запит: {params}")
     resp = requests.get(url, params=params, timeout=10)
     data = resp.json()
-
     if data.get("retCode") != 0:
         raise Exception(f"❌ API error: {data}")
-
     return data["result"]["list"]
 
-# --- FETCH LAST MONTH ---
-from datetime import datetime, timedelta
-import time
-
+# --- FETCH LAST MONTH (змінили на останні 3 дні) ---
 def fetch_last_month_klines(symbol="TONUSDT", interval="60"):
     all_candles = []
 
-    start_dt = datetime.utcnow() - timedelta(days=30)
-    start = int(start_dt.timestamp())
+    # беремо 3 дні назад від зараз
+    start_dt = datetime.utcnow() - timedelta(days=3)
+    start = int(start_dt.timestamp())  # у секундах
     last_ts = None
 
     while True:
@@ -50,34 +33,27 @@ def fetch_last_month_klines(symbol="TONUSDT", interval="60"):
 
         all_candles.extend(candles)
 
-        new_ts = int(candles[-1][0])
+        new_ts = int(candles[-1][0]) // 1000
         if last_ts == new_ts:
             break
         last_ts = new_ts
 
-        start = new_ts // 1000 + 1
+        start = new_ts + 1
         time.sleep(0.2)
 
     return all_candles
-
 
 # --- SAVE TO DB (no duplicates) ---
 def save_klines(candles, symbol="TONUSDT", interval="1h"):
     with Session() as session:
         for c in candles:
-            ts, o, h, l, cl, v, turnover = c
-            timestamp_sec = int(int(ts) // 1000)
-
-            # Перевірка, чи свічка вже є
+            ts, o, h, l, cl, v, *_ = c
+            timestamp_sec = int(ts) // 1000
             exists = session.query(Crypto).filter_by(
-                symbol=symbol,
-                interval=interval,
-                timestamp=timestamp_sec
+                symbol=symbol, interval=interval, timestamp=timestamp_sec
             ).first()
-
             if exists:
-                continue  # пропускаємо дублікат
-
+                continue
             crypto = Crypto(
                 symbol=symbol,
                 interval=interval,
@@ -93,6 +69,7 @@ def save_klines(candles, symbol="TONUSDT", interval="1h"):
         print(f"✅ Saved {len(candles)} candles into DB (duplicates пропущено)")
 
 
+# --- Виклик ---
 # if __name__ == "__main__":
 #     candles = fetch_last_month_klines("TONUSDT", interval="60")
 #     save_klines(candles, "TONUSDT", "1h")
