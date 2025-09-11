@@ -32,15 +32,23 @@
       const interval = document.getElementById("interval").value.trim();
       const status = document.getElementById("status");
 
-      if (!symbol) { status.textContent = "Enter symbol"; status.style.color="red"; return; }
+      if (!symbol) {
+        status.textContent = "Enter symbol";
+        status.style.color = "red";
+        return;
+      }
 
       try {
-<!--        const res = await fetch(`http://127.0.0.1:1489/admin_add_crypto?symbol=${symbol}&interval=${interval}`, {-->
-          const res = await fetch(`https://exchange.algorithmux.com/admin_add_crypto?symbol=${symbol}&interval=${interval}`,
-          method: "POST",
-          credentials: "include"
-        });
+        const res = await fetch(
+          `https://exchange.algorithmux.com/admin_add_crypto?symbol=${symbol}&interval=${interval}`,
+          {
+            method: "POST",
+            credentials: "include"
+          }
+        );
+
         const data = await res.json();
+
         if (res.ok) {
           status.style.color = "green";
           status.textContent = data.message || "Success!";
@@ -50,7 +58,8 @@
         }
       } catch (err) {
         status.style.color = "red";
-        status.textContent = "You are not admin";
+        status.textContent = "Request failed";
+        console.error(err);
       }
     }
   </script>
