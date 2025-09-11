@@ -131,7 +131,14 @@
         }
 
         try {
-            const res = await fetch("http://127.0.0.1:1489/login", {
+<!--            const res = await fetch("http://127.0.0.1:1489/login", {-->
+<!--                method: "POST",-->
+<!--                credentials: "include",-->
+<!--                headers: { "Content-Type": "application/json" },-->
+<!--                body: JSON.stringify({ email, password })-->
+<!--            });-->
+
+            const res = await fetch("https://exchange.algorithmux.com/login", {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -161,7 +168,8 @@
     // --- Google login ---
     document.getElementById('google-login').addEventListener('click', () => {
         // Direct redirect to server endpoint, server will redirect to Google
-        window.location.href = "http://127.0.0.1:1489/google/url";
+<!--        window.location.href = "http://127.0.0.1:1489/google/url";-->
+        window.location.href = "https://exchange.algorithmux.com/google/url";
     });
 </script>
 </body>

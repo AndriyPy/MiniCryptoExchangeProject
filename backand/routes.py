@@ -1,3 +1,4 @@
+import os
 from typing import Annotated
 import bcrypt
 import jwt
@@ -23,7 +24,7 @@ from backand.auth.google_auth import generate_google_oauth_redirect_uri
 import aiohttp
 from backand.auth.config import settings
 import logging
-from backand.bbb import *
+from backand.bbb import fetch_klines, fetch_last_month_klines, save_klines
 from backand.send_email import send_email
 
 
@@ -248,7 +249,7 @@ def get_google_redirect_uri():
     logger.info(f"🔗 Generated Google OAuth redirect URI: {uri}")
     return RedirectResponse(url=uri, status_code=302)
 
-
+domain_name = os.getenv("DOMAIN_NAME")
 @router.get("/google/callback", tags=["auth"])
 async def handle_code(
         response: Response,
@@ -266,7 +267,8 @@ async def handle_code(
                 "client_id": settings.OAUTH_GOOGLE_CLIENT_ID,
                 "client_secret": settings.OAUTH_GOOGLE_CLIENT_SECRET,
                 "grant_type": "authorization_code",
-                "redirect_uri": "http://127.0.0.1:1489/google/callback",
+                # "redirect_uri": "http://127.0.0.1:1489/google/callback",
+                "redirect_uri": f"https://{domain_name}/google/callback",
                 "code": code,
             },
             ssl=ssl_context
@@ -317,7 +319,8 @@ async def handle_code(
     )
 
     response.status_code = 307
-    response.headers["Location"] = "http://127.0.0.1:5500/profile.html"
+    # response.headers["Location"] = "http://127.0.0.1:5500/profile.html"
+    response.headers["Location"] = f"https://{domain_name}/profile.html"
 
     return response
 
@@ -413,7 +416,8 @@ async def verify_email(current_user: TokenData = Depends(get_current_user)):
                 expires_delta=timedelta(minutes=5)
             )
 
-            link = f"http://127.0.0.1:1489/verify_email_confirm?token={token}"
+            # link = f"http://127.0.0.1:1489/verify_email_confirm?token={token}"
+            link = f"https://{domain_name}/verify_email_confirm?token={token}"
 
             send_email(user_name=user.name, user_email=user.email, link=link)
 
@@ -438,7 +442,8 @@ async def confirm_email(token: str = Query(...)):
             session.commit()
 
         logger.info(f"✅user: {user.email} confirmed email")
-        return RedirectResponse("http://127.0.0.1:5500/profile.html")
+        # return RedirectResponse("http://127.0.0.1:5500/profile.html")
+        return RedirectResponse(f"https://{domain_name}/profile.html")
 
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=400, detail="Invalid token")

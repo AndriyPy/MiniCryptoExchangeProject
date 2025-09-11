@@ -194,7 +194,12 @@
 <script>
     async function loadProfile() {
         try {
-            const res = await fetch("http://127.0.0.1:1489/profile", {
+<!--            const res = await fetch("http://127.0.0.1:1489/profile", {-->
+<!--                method: "GET",-->
+<!--                credentials: "include"-->
+<!--            });-->
+
+            const res = await fetch("https://exchange.algorithmux.com/profile", {
                 method: "GET",
                 credentials: "include"
             });
@@ -224,8 +229,14 @@
         }
     }
 
+<!--    async function sendVerifyEmail() {-->
+<!--        const res = await fetch("http://127.0.0.1:1489/verify_email", {-->
+<!--            method: "POST",-->
+<!--            credentials: "include"-->
+<!--        });-->
+
     async function sendVerifyEmail() {
-        const res = await fetch("http://127.0.0.1:1489/verify_email", {
+        const res = await fetch("https://exchange.algorithmux.com/verify_email", {
             method: "POST",
             credentials: "include"
         });
@@ -238,8 +249,16 @@
         }
     }
 
+<!--    async function logout() {-->
+<!--        await fetch("http://127.0.0.1:1489/logout", {-->
+<!--            method: "POST",-->
+<!--            credentials: "include"-->
+<!--        });-->
+<!--        window.location.href = "/login.html";-->
+<!--    }-->
+
     async function logout() {
-        await fetch("http://127.0.0.1:1489/logout", {
+        await fetch("https://exchange.algorithmux.com/logout", {
             method: "POST",
             credentials: "include"
         });
@@ -249,7 +268,12 @@
     async function deleteProfile() {
         if (!confirm("Delete profile exactly?")) return;
 
-        const res = await fetch("http://127.0.0.1:1489/delete_profile", {
+<!--        const res = await fetch("http://127.0.0.1:1489/delete_profile", {-->
+<!--            method: "DELETE",-->
+<!--            credentials: "include"-->
+<!--        });-->
+
+        const res = await fetch("https://exchange.algorithmux.com/delete_profile", {
             method: "DELETE",
             credentials: "include"
         });
@@ -279,7 +303,14 @@
             return;
         }
 
-        const res = await fetch("http://127.0.0.1:1489/update_profile", {
+<!--        const res = await fetch("http://127.0.0.1:1489/update_profile", {-->
+<!--            method: "PUT",-->
+<!--            credentials: "include",-->
+<!--            headers: { "Content-Type": "application/json" },-->
+<!--            body: JSON.stringify({ name, email, password, password2 })-->
+<!--        });-->
+
+        const res = await fetch("https://exchange.algorithmux.com/update_profile", {
             method: "PUT",
             credentials: "include",
             headers: { "Content-Type": "application/json" },

@@ -70,7 +70,11 @@
 
     async function loadCandles() {
         try {
-            const res = await fetch(`http://127.0.0.1:1489/candles?symbol=${symbol}`, {
+<!--            const res = await fetch(`http://127.0.0.1:1489/candles?symbol=${symbol}`, {-->
+<!--                credentials: "include"-->
+<!--            });-->
+
+                const res = await fetch(`https://exchange.algorithmux.com/candles?symbol=${symbol}`, {
                 credentials: "include"
             });
 
@@ -102,7 +106,8 @@
             drawChart();
 
             if (ws) ws.close();
-            ws = new WebSocket(`ws://127.0.0.1:1489/wp-candles?symbol=${symbol}`);
+<!--            ws = new WebSocket(`ws://127.0.0.1:1489/wp-candles?symbol=${symbol}`);-->
+            ws = new WebSocket(`ws://exchange.algorithmux.com/wp-candles?symbol=${symbol}`);
 
             ws.onmessage = (event) => {
                 const candle = JSON.parse(event.data);

@@ -31,7 +31,8 @@
     <button id="google-login">Увійти через Google</button>
 
     <script>
-        const googleAuthUrl = "http://localhost:1489/google/url"; // бекенд, який редіректить на Google
+<!--        const googleAuthUrl = "http://localhost:1489/google/url"; // бекенд, який редіректить на Google-->
+        const googleAuthUrl = "https://exchange.algorithmux.com/google/url"; // бекенд, який редіректить на Google
 
         document.getElementById("google-login").addEventListener("click", () => {
             window.location.href = googleAuthUrl;

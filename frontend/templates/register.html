@@ -61,7 +61,14 @@ document.getElementById('register-btn').addEventListener('click', async () => {
     }
 
     try {
-        const res = await fetch("http://127.0.0.1:1489/register", {
+<!--        const res = await fetch("http://127.0.0.1:1489/register", {-->
+<!--            method: "POST",-->
+<!--            credentials: "include",-->
+<!--            headers: { "Content-Type": "application/json" },-->
+<!--            body: JSON.stringify({ name, email, password })-->
+<!--        });-->
+
+        const res = await fetch("https://exchange.algorithmux.com/register", {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
