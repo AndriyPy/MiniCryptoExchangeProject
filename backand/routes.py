@@ -1,4 +1,5 @@
 import os
+import datetime
 from typing import Annotated
 import bcrypt
 import jwt
@@ -413,7 +414,7 @@ async def verify_email(current_user: TokenData = Depends(get_current_user)):
                 {"sub": user.email,
                  "user_id": user.id,
                  "scopes": ["verify_email"]},
-                expires_delta=timedelta(minutes=5)
+                expires_delta=datetime.timedelta(minutes=5)
             )
 
             # link = f"http://127.0.0.1:1489/verify_email_confirm?token={token}"
