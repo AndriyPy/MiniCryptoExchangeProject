@@ -292,42 +292,47 @@
         document.getElementById("updateModal").style.display = "none";
     }
 
-    async function submitUpdate() {
-        const name = document.getElementById("newName").value.trim();
-        const email = document.getElementById("newEmail").value.trim();
-        const password = document.getElementById("newPassword").value.trim();
-        const password2 = document.getElementById("confirmPassword").value.trim();
+async function submitUpdate() {
+    const name = document.getElementById("newName").value.trim();
+    const email = document.getElementById("newEmail").value.trim();
+    const password = document.getElementById("newPassword").value.trim();
+    const password2 = document.getElementById("confirmPassword").value.trim();
 
-        if (password && password !== password2) {
-            alert("Паролі не співпадають!");
-            return;
-        }
-
-<!--        const res = await fetch("http://127.0.0.1:1489/update_profile", {-->
-<!--            method: "PUT",-->
-<!--            credentials: "include",-->
-<!--            headers: { "Content-Type": "application/json" },-->
-<!--            body: JSON.stringify({ name, email, password, password2 })-->
-<!--        });-->
-
-        const res = await fetch("https://exchange.algorithmux.com/update_profile", {
-            method: "PUT",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email, password, password2 })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-            alert(data.detail || "Помилка при оновленні");
-            return;
-        }
-
-        alert("✅ Profile updated");
-        closeModal();
-        loadProfile();
+    if (password && password !== password2) {
+        alert("Паролі не співпадають!");
+        return;
     }
+
+    // Формуємо тіло запиту тільки з непорожніх полів
+    const body = {};
+    if (name) body.name = name;
+    if (email) body.email = email;
+    if (password) body.password = password;
+
+    if (Object.keys(body).length === 0) {
+        alert("Нічого не введено для оновлення");
+        return;
+    }
+
+    const res = await fetch("https://exchange.algorithmux.com/update_profile", {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        alert(data.detail || "Помилка при оновленні");
+        return;
+    }
+
+    alert("✅ Profile updated");
+    closeModal();
+    loadProfile();
+}
+
 
     loadProfile();
 </script>
