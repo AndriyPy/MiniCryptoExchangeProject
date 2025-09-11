@@ -309,7 +309,7 @@ async function submitUpdate() {
     if (email) body.email = email;
     if (password) {
         body.password = password;
-        body.password2 = password2;  // 🔑 додаємо другий пароль
+        body.password2 = password2;
     }
 
     if (Object.keys(body).length === 0) {
@@ -335,8 +335,6 @@ async function submitUpdate() {
     closeModal();
     loadProfile();
 }
-
-
 
     loadProfile();
 </script>

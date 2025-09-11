@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, SecretStr, Field
+from typing import Optional
 
 class User(BaseModel):
     name: str = Field()
@@ -17,16 +18,21 @@ class UserLogin(BaseModel):
     password: SecretStr
 
 class Update_User(BaseModel):
-    name: str = Field(
+    name: Optional[str] = Field(
         None,
-        description="New name")
-    email: EmailStr = Field(
+        description="New name"
+    )
+    email: Optional[EmailStr] = Field(
         None,
         description="New email",
-        examples=["john@gmail.com"])
-    password: SecretStr = Field(
+        examples=["john@gmail.com"]
+    )
+    password: Optional[SecretStr] = Field(
         None,
         description="New user's password. Minimum 6 characters.",
         min_length=6
     )
-    password2: SecretStr = Field(None, description="confirm password",)
+    password2: Optional[SecretStr] = Field(
+        None,
+        description="Confirm password"
+    )
