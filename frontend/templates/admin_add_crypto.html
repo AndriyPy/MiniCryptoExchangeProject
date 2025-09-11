@@ -2,68 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Add Crypto (Admin)</title>
+  <title>Admin Panel</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 30px; background: #f4f7f8; }
-    .box { max-width: 320px; margin: 50px auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,.1); }
-    label { display:block; margin-top:10px; font-weight:bold; }
-    input { width:100%; padding:8px; margin-top:5px; border:1px solid #ccc; border-radius:5px; }
-    button { margin-top:15px; padding:10px; width:100%; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer; }
-    button:hover { background:#0056b3; }
-    #status { margin-top:12px; font-weight:bold; }
+    .box { max-width: 380px; margin: 50px auto; background:#fff; padding:25px; border-radius:8px; box-shadow:0 6px 12px rgba(0,0,0,.15); }
+    h3 { margin-top: 0; text-align: center; color: #333; }
+    label { display:block; margin-top:15px; font-weight:bold; color: #555; }
+    input { width: calc(100% - 20px); padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+    .button-group { display: flex; gap: 10px; margin-top: 20px; }
+    button { flex: 1; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; }
+    .add-btn { background:#007bff; color:#fff; }
+    .add-btn:hover { background:#0056b3; }
+    .delete-btn { background:#dc3545; color:#fff; }
+    .delete-btn:hover { background:#c82333; }
+    #status { margin-top:15px; text-align: center; font-weight:bold; font-size: 14px; }
   </style>
 </head>
 <body>
+
   <div class="box">
-    <h3>Add Crypto</h3>
-    <label>Symbol:</label>
+    <h3>Admin Crypto Management</h3>
+    <label for="symbol">Symbol:</label>
     <input id="symbol" value="BTCUSDT">
 
-    <label>Interval:</label>
+    <label for="interval">Interval:</label>
     <input id="interval" value="60">
 
-    <button onclick="send()">Send</button>
+    <div class="button-group">
+      <button class="add-btn" onclick="send('add')">Add Crypto</button>
+      <button class="delete-btn" onclick="send('delete')">Delete Crypto</button>
+    </div>
     <p id="status"></p>
   </div>
 
 <script>
-  async function send() {
+  const API_URL = "https://exchange.algorithmux.com"; // Замініть на свій домен
+
+  async function send(action) {
     const symbol = document.getElementById("symbol").value.trim();
     const interval = document.getElementById("interval").value.trim();
     const status = document.getElementById("status");
 
     if (!symbol) {
-      status.textContent = "⚠️ Enter symbol";
+      status.textContent = "⚠️ Введіть символ";
+      status.style.color = "red";
+      return;
+    }
+
+    // Визначення URL та методу залежно від дії
+    let url;
+    let method;
+    let successMessage;
+
+    if (action === 'add') {
+      url = `${API_URL}/admin_add_crypto?symbol=${symbol}&interval=${interval}`;
+      method = "POST";
+      successMessage = "✅ Успішно додано!";
+    } else if (action === 'delete') {
+      url = `${API_URL}/admin_delete_crypto?symbol=${symbol}`;
+      method = "DELETE";
+      successMessage = "✅ Успішно видалено!";
+    } else {
+      status.textContent = "❌ Невідома дія";
       status.style.color = "red";
       return;
     }
 
     try {
-      const res = await fetch(
-        `https://exchange.algorithmux.com/admin_add_crypto?symbol=${symbol}&interval=${interval}`,
-        {
-          method: "POST",
-          credentials: "include"
-        }
-      );
+      const res = await fetch(url, {
+        method: method,
+        credentials: "include"
+      });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        data = { detail: "(response is not JSON)" };
-      }
-
+      const data = await res.json();
       if (res.ok) {
         status.style.color = "green";
-        status.textContent = data.message || "✅ Success!";
+        status.textContent = data.message || successMessage;
       } else {
         status.style.color = "red";
-        status.textContent = `❌ Error ${res.status}: ${data.detail || "(no message)"}`;
+        status.textContent = `❌ Помилка ${res.status}: ${data.detail || "Немає повідомлення"}`;
       }
     } catch (err) {
       status.style.color = "red";
-      status.textContent = `❌ Request failed: ${err.message}`;
+      status.textContent = `❌ Помилка запиту: ${err.message}`;
       console.error(err);
     }
   }

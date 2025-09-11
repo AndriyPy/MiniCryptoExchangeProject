@@ -451,7 +451,7 @@ async def confirm_email(token: str = Query(...)):
 
 
 
-@router.post("/admin_add_crypto", tags=["Crypto"])
+@router.post("/admin_add_crypto", tags=["Admin"])
 async def admin(symbol: str, interval: str = "60", current_user: TokenData = Depends(get_current_user)):
     try:
         with Session() as session:
@@ -470,4 +470,24 @@ async def admin(symbol: str, interval: str = "60", current_user: TokenData = Dep
             return {"message":f"crypto {symbol} saved successfully"}
 
     except Exception as e:
+        print("❌ error:", e)
+
+
+@router.delete("/admin_delete_crypto", tags=["Admin"])
+async def admin_delete(symbol: str, current_user: TokenData = Depends(get_current_user)):
+    try:
+        with Session() as session:
+            user = session.query(UserDbModel).filter_by(id=current_user.user_id).first()
+
+            if not user or not user.admin:
+                raise HTTPException(status_code=401, detail="you are not authorized or not admin")
+
+            deleted_count = session.query(Crypto).filter(Crypto.symbol == symbol).delete()
+            session.commit()
+
+            logger.info(f"✅ Admin {user.email} deleted {deleted_count}")
+
+
+    except Exception as e:
+        logger.error(f"❌ Помилка при видаленні: {e}")
         print("❌ error:", e)
