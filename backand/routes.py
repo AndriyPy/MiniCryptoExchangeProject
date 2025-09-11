@@ -198,11 +198,10 @@ async def update_profile(response: Response, user:Update_User, current_user: Tok
 
             if user.email:
                 email_in_use = session.query(UserDbModel).filter(UserDbModel.email == user.email,UserDbModel.id != existing_user.id).first()
-
                 if email_in_use:
-                    raise HTTPException(status_code=400, detail="user with this email exist")
 
-            existing_user.email = user.email
+                    raise HTTPException(status_code=400, detail="user with this email exist")
+                existing_user.email = user.email
 
             if user.password:
                 if user.password != user.password2:
