@@ -105,17 +105,19 @@
         drawChart();
 
         if (ws) ws.close();
-        ws = new WebSocket(`ws://exchange.algorithmux.com/wp-candles?symbol=${symbol}`);
+        const interval = params.get("interval") || "1";
+        ws = new WebSocket(`wss://exchange.algorithmux.com/wp-candles?symbol=${symbol}&interval=${interval}`);
+
 
         ws.onmessage = (event) => {
             const candle = JSON.parse(event.data);
             candlesData.push({
-                x: new Date(candle.start * 1000),
-                open: candle.open,
-                high: candle.high,
-                low: candle.low,
-                close: candle.close
-            });
+            x: new Date(candle.start),  // без *1000
+            open: candle.open,
+            high: candle.high,
+            low: candle.low,
+            close: candle.close
+        });
             drawChart();
         };
 
@@ -127,23 +129,26 @@
 
 
     function drawChart() {
-        const trace = {
-            x: candlesData.map(c => c.x),
-            open: candlesData.map(c => c.open),
-            high: candlesData.map(c => c.high),
-            low: candlesData.map(c => c.low),
-            close: candlesData.map(c => c.close),
-            type: 'candlestick',
-            increasing: { line: { color: 'green' } },
-            decreasing: { line: { color: 'red' } }
-        };
+    const trace = {
+        x: candlesData.map(c => c.x),
+        open: candlesData.map(c => c.open),
+        high: candlesData.map(c => c.high),
+        low: candlesData.map(c => c.low),
+        close: candlesData.map(c => c.close),
+        type: 'candlestick',
+        increasing: { line: { color: 'green' } },
+        decreasing: { line: { color: 'red' } }
+    };
 
-        Plotly.newPlot('chart', [trace], {
-            title: symbol,
-            xaxis: { title: 'Time' },
-            yaxis: { title: 'Price' }
-        }, {responsive: true});
-    }
+    const layout = {
+        title: symbol,
+        xaxis: { title: 'Time' },
+        yaxis: { title: 'Price' }
+    };
+
+    Plotly.react('chart', [trace], layout, {responsive: true});
+}
+
 
     loadCandles();
 </script>
