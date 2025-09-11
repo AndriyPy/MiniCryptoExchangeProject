@@ -106,7 +106,6 @@ async def register_user(user:User, response: Response):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @router.post("/login", tags=["auth"])
 def login(user: UserLogin, response: Response):
     try:
@@ -180,7 +179,6 @@ async def delete_profile(response: Response,current_user: TokenData = Depends(ge
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.put("/update_profile", tags=["Profile"])
@@ -319,7 +317,7 @@ async def handle_code(
     )
 
     response.status_code = 307
-    # response.headers["Location"] = "http://127.0.0.1:5500/profile.html"
+
     response.headers["Location"] = f"https://{domain_name}/profile.html"
 
     return response
@@ -399,7 +397,6 @@ async def websocket_crypto(websocket: WebSocket, symbol: str, interval="1"):
         print("❌ error:", e)
 
 
-
 @router.post("/verify_email", tags=["auth"])
 async def verify_email(current_user: TokenData = Depends(get_current_user)):
     try:
@@ -416,7 +413,6 @@ async def verify_email(current_user: TokenData = Depends(get_current_user)):
                 expires_delta=datetime.timedelta(minutes=5)
             )
 
-            # link = f"http://127.0.0.1:1489/verify_email_confirm?token={token}"
             link = f"https://{domain_name}/verify_email_confirm?token={token}"
 
             send_email(user_name=user.name, user_email=user.email, link=link)
@@ -442,8 +438,6 @@ async def confirm_email(token: str = Query(...)):
             logger.info(f"✅user: {user.email} confirmed email")
             session.commit()
 
-
-        # return RedirectResponse("http://127.0.0.1:5500/profile.html")
         return RedirectResponse(f"https://{domain_name}/profile.html")
 
     except jwt.InvalidTokenError:
@@ -486,6 +480,7 @@ async def admin_delete(symbol: str, current_user: TokenData = Depends(get_curren
             session.commit()
 
             logger.info(f"✅ Admin {user.email} deleted {deleted_count}")
+            return {"message": f"crypto {symbol} deleted successfully"}
 
 
     except Exception as e:
