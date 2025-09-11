@@ -71,13 +71,23 @@
     async function loadCandles() {
         try {
             const res = await fetch(`http://127.0.0.1:1489/candles?symbol=${symbol}`, {
-                                            credentials: "include"
-                                        })
+                credentials: "include"
+            });
+
+            if (res.status === 401) {
+                alert("⚠️ Ви не авторизовані або email не підтверджено");
+                return;
+            }
+
+            if (!res.ok) {
+                alert("❌ Помилка сервера: " + res.status);
+                return;
+            }
 
             const data = await res.json();
 
             if (!data.length) {
-                alert("No candles found in DB for this symbol");
+                alert("📉 Свічок немає у базі для цього символу");
                 return;
             }
 
@@ -93,23 +103,24 @@
 
             if (ws) ws.close();
             ws = new WebSocket(`ws://127.0.0.1:1489/wp-candles?symbol=${symbol}`);
+
             ws.onmessage = (event) => {
-                const msg = JSON.parse(event.data);
-                if (msg.data && msg.data.length > 0) {
-                    const candle = msg.data[0];
-                    candlesData.push({
-                        x: new Date(candle.start * 1000),
-                        open: parseFloat(candle.open),
-                        high: parseFloat(candle.high),
-                        low: parseFloat(candle.low),
-                        close: parseFloat(candle.close)
-                    });
-                    drawChart();
-                }
+                const candle = JSON.parse(event.data);
+
+                // додаємо нову свічку
+                candlesData.push({
+                    x: new Date(candle.start * 1000),
+                    open: candle.open,
+                    high: candle.high,
+                    low: candle.low,
+                    close: candle.close
+                });
+
+                drawChart();
             };
         } catch (err) {
             console.error("Error loading:", err);
-            alert("Failed to fetch candles");
+            alert("❌ Не вдалося отримати дані свічок");
         }
     }
 

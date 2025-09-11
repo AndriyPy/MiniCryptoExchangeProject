@@ -48,12 +48,10 @@ logger.propagate = False
 
 
 
-
 BYBIT_URL = "https://api.bybit.com/v5/market/kline"
 BYBIT_WS = "wss://stream.bybit.com/v5/public/spot"
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
-
 
 
 @router.get("/index")
@@ -376,13 +374,23 @@ async def websocket_crypto(websocket: WebSocket, symbol: str, interval="1"):
                 msg = await bybit_ws.recv()
                 data = json.loads(msg)
 
-                print("📩 Отримано від Bybit:", data)
+                print("📩 received from Bybit:", data)
 
                 if "topic" in data and "kline" in data["topic"]:
-                    await websocket.send_json(data)
+                    kline = data["data"][0]
+                    candle = {
+                        "start": kline["start"],
+                        "open": float(kline["open"]),
+                        "high": float(kline["high"]),
+                        "low": float(kline["low"]),
+                        "close": float(kline["close"]),
+                    }
+                    await websocket.send_json(candle)
+                    print()
+
 
     except WebSocketDisconnect:
-        print("❌ Клієнт відключився")
+        print("❌ Client disconected")
 
     except Exception as e:
         print("❌ error:", e)
