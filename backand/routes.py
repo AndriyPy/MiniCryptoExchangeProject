@@ -440,9 +440,10 @@ async def confirm_email(token: str = Query(...)):
                 raise HTTPException(status_code=404, detail="user not found")
 
             user.verified_email = True
+            logger.info(f"✅user: {user.email} confirmed email")
             session.commit()
 
-        logger.info(f"✅user: {user.email} confirmed email")
+
         # return RedirectResponse("http://127.0.0.1:5500/profile.html")
         return RedirectResponse(f"https://{domain_name}/profile.html")
 
