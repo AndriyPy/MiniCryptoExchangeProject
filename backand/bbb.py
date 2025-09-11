@@ -5,17 +5,26 @@ from backand.database.database import Session
 from backand.database.models import Crypto
 
 # --- FETCH KLINES ---
-def fetch_klines(symbol="TONUSDT", interval="60", start=None, limit=200):
+def fetch_klines(symbol="TONUSDT", interval="60", start=None, end=None, limit=200):
     url = "https://api.bybit.com/v5/market/kline"
     params = {"category": "spot", "symbol": symbol, "interval": interval, "limit": limit}
     if start:
         params["start"] = start
+    if end:
+        params["end"] = end
+
     print(f"🔍 Запит: {params}")
-    resp = requests.get(url, params=params, timeout=10)
-    data = resp.json()
-    if data.get("retCode") != 0:
-        raise Exception(f"❌ API error: {data}")
-    return data["result"]["list"]
+    try:
+        resp = requests.get(url, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("retCode") != 0:
+            raise Exception(f"❌ API error: {data}")
+
+        return data["result"]["list"]
+
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"❌ Network error: {e}")
 
 
 # --- FETCH LAST MONTH (тепер це останні 3 місяці) ---
@@ -23,26 +32,31 @@ def fetch_last_month_klines(symbol="TONUSDT", interval="60"):
     all_candles = []
 
     # беремо 90 днів назад від зараз
-    start_dt = datetime.utcnow() - timedelta(days=90)
-    start = int(start_dt.timestamp() * 1000)  # у мілісекундах
-    last_ts = None
+    end_date = datetime.utcnow()
+    start_date_limit = end_date - timedelta(days=90)
+
+    end_timestamp = int(end_date.timestamp() * 1000)
 
     while True:
-        candles = fetch_klines(symbol, interval, start=start, limit=200)
+        candles = fetch_klines(symbol, interval, end=end_timestamp, limit=400)
+
         if not candles:
             break
 
-        all_candles.extend(candles)
+        oldest_candle_ts = int(candles[-1][0])
+        new_candles = [c for c in candles if int(c[0]) < end_timestamp]
+        all_candles.extend(new_candles)
 
-        new_ts = int(candles[-1][0])  # timestamp вже в мс
-        if last_ts == new_ts:
+        end_timestamp = oldest_candle_ts
+
+        if oldest_candle_ts < int(start_date_limit.timestamp() * 1000):
             break
-        last_ts = new_ts
 
-        start = new_ts + 1
-        time.sleep(0.2)  # щоб не спамити API
+    all_candles.sort(key=lambda x: int(x[0]))
 
     return all_candles
+
+
 
 
 # --- SAVE TO DB (no duplicates) ---
