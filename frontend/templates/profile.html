@@ -307,7 +307,10 @@ async function submitUpdate() {
     const body = {};
     if (name) body.name = name;
     if (email) body.email = email;
-    if (password) body.password = password;
+    if (password) {
+        body.password = password;
+        body.password2 = password2;  // 🔑 додаємо другий пароль
+    }
 
     if (Object.keys(body).length === 0) {
         alert("Нічого не введено для оновлення");
@@ -332,6 +335,7 @@ async function submitUpdate() {
     closeModal();
     loadProfile();
 }
+
 
 
     loadProfile();

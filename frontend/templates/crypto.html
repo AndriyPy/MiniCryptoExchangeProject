@@ -69,65 +69,62 @@
     const symbol = params.get("symbol") || "BTCUSDT";
 
     async function loadCandles() {
-        try {
-<!--            const res = await fetch(`http://127.0.0.1:1489/candles?symbol=${symbol}`, {-->
-<!--                credentials: "include"-->
-<!--            });-->
+    try {
+        const res = await fetch(`https://exchange.algorithmux.com/candles?symbol=${symbol}`, {
+            credentials: "include"
+        });
 
-                const res = await fetch(`https://exchange.algorithmux.com/candles?symbol=${symbol}`, {
-                credentials: "include"
-            });
-
-            if (res.status === 401) {
-                alert("⚠️ Ви не авторизовані або email не підтверджено");
-                return;
-            }
-
-            if (!res.ok) {
-                alert("❌ Помилка сервера: " + res.status);
-                return;
-            }
-
-            const data = await res.json();
-
-            if (!data.length) {
-                alert("📉 Свічок немає у базі для цього символу");
-                return;
-            }
-
-            candlesData = data.map(c => ({
-                x: new Date(c.timestamp * 1000),
-                open: c.open,
-                high: c.high,
-                low: c.low,
-                close: c.close
-            }));
-
-            drawChart();
-
-            if (ws) ws.close();
-<!--            ws = new WebSocket(`ws://127.0.0.1:1489/wp-candles?symbol=${symbol}`);-->
-            ws = new WebSocket(`ws://exchange.algorithmux.com/wp-candles?symbol=${symbol}`);
-
-            ws.onmessage = (event) => {
-                const candle = JSON.parse(event.data);
-
-                // додаємо нову свічку
-                candlesData.push({
-                    x: new Date(candle.start * 1000),
-                    open: candle.open,
-                    high: candle.high,
-                    low: candle.low,
-                    close: candle.close
-                });
-
-                drawChart();
-            };
-        } catch (err) {
-            console.error("Error loading:", err);
-            alert("❌ Не вдалося отримати дані свічок");
+        if (!res.ok) {
+            const text = await res.text();
+            alert(`❌ Помилка сервера: ${res.status}\n${text}`);
+            return;
         }
+
+        let data;
+        try {
+            data = await res.json();
+        } catch (e) {
+            alert("❌ Невірний формат даних від сервера");
+            console.error(e);
+            return;
+        }
+
+        if (!data.length) {
+            alert("📉 Свічок немає у базі для цього символу");
+            return;
+        }
+
+        candlesData = data.map(c => ({
+            x: new Date(c.timestamp * 1000),
+            open: c.open,
+            high: c.high,
+            low: c.low,
+            close: c.close
+        }));
+
+        drawChart();
+
+        if (ws) ws.close();
+        ws = new WebSocket(`ws://exchange.algorithmux.com/wp-candles?symbol=${symbol}`);
+
+        ws.onmessage = (event) => {
+            const candle = JSON.parse(event.data);
+            candlesData.push({
+                x: new Date(candle.start * 1000),
+                open: candle.open,
+                high: candle.high,
+                low: candle.low,
+                close: candle.close
+            });
+            drawChart();
+        };
+
+    } catch (err) {
+        console.error("Error loading:", err);
+        alert(`❌ Не вдалося отримати дані свічок\n${err}`);
     }
+}
+
 
     function drawChart() {
         const trace = {

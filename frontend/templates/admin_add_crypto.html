@@ -26,42 +26,48 @@
     <p id="status"></p>
   </div>
 
-  <script>
-    async function send() {
-      const symbol = document.getElementById("symbol").value.trim();
-      const interval = document.getElementById("interval").value.trim();
-      const status = document.getElementById("status");
+<script>
+  async function send() {
+    const symbol = document.getElementById("symbol").value.trim();
+    const interval = document.getElementById("interval").value.trim();
+    const status = document.getElementById("status");
 
-      if (!symbol) {
-        status.textContent = "Enter symbol";
-        status.style.color = "red";
-        return;
-      }
-
-      try {
-        const res = await fetch(
-          `https://exchange.algorithmux.com/admin_add_crypto?symbol=${symbol}&interval=${interval}`,
-          {
-            method: "POST",
-            credentials: "include"
-          }
-        );
-
-        const data = await res.json();
-
-        if (res.ok) {
-          status.style.color = "green";
-          status.textContent = data.message || "Success!";
-        } else {
-          status.style.color = "red";
-          status.textContent = data.detail || "Error";
-        }
-      } catch (err) {
-        status.style.color = "red";
-        status.textContent = "Request failed";
-        console.error(err);
-      }
+    if (!symbol) {
+      status.textContent = "⚠️ Enter symbol";
+      status.style.color = "red";
+      return;
     }
-  </script>
+
+    try {
+      const res = await fetch(
+        `https://exchange.algorithmux.com/admin_add_crypto?symbol=${symbol}&interval=${interval}`,
+        {
+          method: "POST",
+          credentials: "include"
+        }
+      );
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = { detail: "(response is not JSON)" };
+      }
+
+      if (res.ok) {
+        status.style.color = "green";
+        status.textContent = data.message || "✅ Success!";
+      } else {
+        status.style.color = "red";
+        status.textContent = `❌ Error ${res.status}: ${data.detail || "(no message)"}`;
+      }
+    } catch (err) {
+      status.style.color = "red";
+      status.textContent = `❌ Request failed: ${err.message}`;
+      console.error(err);
+    }
+  }
+</script>
+
 </body>
 </html>
