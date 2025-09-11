@@ -92,9 +92,14 @@ document.getElementById('register-btn').addEventListener('click', async () => {
 });
 
 // --- Google login ---
-document.getElementById('google-login').addEventListener('click', () => {
+<!--document.getElementById('google-login').addEventListener('click', () => {-->
+<!--    // Прямий редірект на сервер, сервер перенаправить на Google-->
+<!--    window.location.href = "http://localhost:5500/google_auth.html";-->
+<!--});-->
+
+    document.getElementById('google-login').addEventListener('click', () => {
     // Прямий редірект на сервер, сервер перенаправить на Google
-    window.location.href = "http://localhost:5500/google_auth.html";
+    window.location.href = "http://exchange.algorithmux.com/google_auth.html";
 });
 </script>
 
