@@ -382,7 +382,7 @@ async def websocket_crypto(websocket: WebSocket, symbol: str, interval="1"):
                 if "topic" in data and "kline" in data["topic"]:
                     kline = data["data"][0]
                     candle = {
-                        "start": kline["start"],
+                        "start": kline["start"] * 1000,
                         "open": float(kline["open"]),
                         "high": float(kline["high"]),
                         "low": float(kline["low"]),

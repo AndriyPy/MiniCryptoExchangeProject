@@ -17,13 +17,14 @@ def fetch_klines(symbol="TONUSDT", interval="60", start=None, limit=200):
         raise Exception(f"❌ API error: {data}")
     return data["result"]["list"]
 
-# --- FETCH LAST MONTH (змінили на останні 3 дні) ---
+
+# --- FETCH LAST MONTH (тепер це останні 3 місяці) ---
 def fetch_last_month_klines(symbol="TONUSDT", interval="60"):
     all_candles = []
 
-    # беремо 3 дні назад від зараз
-    start_dt = datetime.utcnow() - timedelta(days=3)
-    start = int(start_dt.timestamp())  # у секундах
+    # беремо 90 днів назад від зараз
+    start_dt = datetime.utcnow() - timedelta(days=90)
+    start = int(start_dt.timestamp() * 1000)  # у мілісекундах
     last_ts = None
 
     while True:
@@ -33,15 +34,16 @@ def fetch_last_month_klines(symbol="TONUSDT", interval="60"):
 
         all_candles.extend(candles)
 
-        new_ts = int(candles[-1][0]) // 1000
+        new_ts = int(candles[-1][0])  # timestamp вже в мс
         if last_ts == new_ts:
             break
         last_ts = new_ts
 
         start = new_ts + 1
-        time.sleep(0.2)
+        time.sleep(0.2)  # щоб не спамити API
 
     return all_candles
+
 
 # --- SAVE TO DB (no duplicates) ---
 def save_klines(candles, symbol="TONUSDT", interval="1h"):

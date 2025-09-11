@@ -112,7 +112,7 @@
         ws.onmessage = (event) => {
             const candle = JSON.parse(event.data);
             candlesData.push({
-            x: new Date(candle.start),  // без *1000
+            x: new Date(candle.start),
             open: candle.open,
             high: candle.high,
             low: candle.low,
@@ -148,7 +148,6 @@
 
     Plotly.react('chart', [trace], layout, {responsive: true});
 }
-
 
     loadCandles();
 </script>
